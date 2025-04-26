@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import requests
 
-app = Flask(__PinPoint__)
+app = Flask(__name__)
 
 api_key = 'AIzaSyBzCuON3M4Jg_wKY-EIlTxexqjjILLt76I'
 
@@ -20,11 +20,11 @@ def fact_check():
         results.append({
             "claim": claim.get("text"),
             "rating": claim.get("claimReview", [{}])[0].get("textualRating"),
-            "publisher": claim.get("claimReview", [{}])[0].get("publisher", {}).get("PinPoint"),
+            "publisher": claim.get("claimReview", [{}])[0].get("publisher", {}).get("name"),
             "url": claim.get("claimReview", [{}])[0].get("url")
         })
 
     return jsonify(results)
 
-if __PinPoint__ == '__main__':
+if __name__ == '__main__':
     app.run(debug=True)
