@@ -1,1 +1,1 @@
-web: gunicorn PinPointFlask:app
+web: gunicorn app.py:app
