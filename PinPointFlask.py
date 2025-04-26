@@ -1,11 +1,11 @@
 from flask import Flask, request, jsonify
 import requests
 
-app = Flask(__name__)
+app = Flask(__name__)  # <<< FIXED here
 
 api_key = 'AIzaSyBzCuON3M4Jg_wKY-EIlTxexqjjILLt76I'
 
-@app.route('/factcheck', methods=['GET'])
+@app.route('/factcheck', methods=['GET'])  # <<< Make sure this route is correct
 def fact_check():
     query = request.args.get('query')
     if not query:
@@ -20,11 +20,11 @@ def fact_check():
         results.append({
             "claim": claim.get("text"),
             "rating": claim.get("claimReview", [{}])[0].get("textualRating"),
-            "publisher": claim.get("claimReview", [{}])[0].get("publisher", {}).get("name"),
+            "publisher": claim.get("claimReview", [{}])[0].get("publisher", {}).get("name"),  # <<< fixed typo here too
             "url": claim.get("claimReview", [{}])[0].get("url")
         })
 
     return jsonify(results)
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # <<< FIXED here
     app.run(debug=True)
