@@ -1,7 +1,8 @@
 from flask import Flask, request, jsonify
 import requests
+import os
 
-app = Flask(__name__)  # <<< FIXED here
+app = Flask(__name__)
 
 api_key = 'AIzaSyBzCuON3M4Jg_wKY-EIlTxexqjjILLt76I'
 
@@ -13,6 +14,11 @@ def factcheck():
 
     url = f"https://factchecktools.googleapis.com/v1alpha1/claims:search?query={query}&key={api_key}"
     response = requests.get(url)
+
+    # 👇👇👇 THIS must be INSIDE the function, not floating by itself
+    if response.status_code != 200:
+        return jsonify({'error': 'Failed to fetch from Fact Check API'}), 500
+
     data = response.json()
 
     results = []
@@ -25,13 +31,6 @@ def factcheck():
         })
 
     return jsonify(results)
-response = requests.get(url)
-if response.status_code != 200:
-    return jsonify({'error': 'Failed to fetch from Fact Check API'}), 500
-
-data = response.json()
-
-import os
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
