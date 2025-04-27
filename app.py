@@ -25,6 +25,11 @@ def factcheck():
         })
 
     return jsonify(results)
+response = requests.get(url)
+if response.status_code != 200:
+    return jsonify({'error': 'Failed to fetch from Fact Check API'}), 500
+
+data = response.json()
 
 if __name__ == '__main__':
     app.run(debug=True)
