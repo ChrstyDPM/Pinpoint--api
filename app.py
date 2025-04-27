@@ -5,7 +5,7 @@ app = Flask(__name__)  # <<< FIXED here
 
 api_key = 'AIzaSyBzCuON3M4Jg_wKY-EIlTxexqjjILLt76I'
 
-@app.route('/factcheck', methods=['GET'])  
+@app.route('/factcheck', methods=['GET'])
 def fact_check():
     query = request.args.get('query')
     if not query:
@@ -26,5 +26,6 @@ def fact_check():
 
     return jsonify(results)
 
-if __name__ == '__main__':  # <<< FIXED here
+if __name__ == '__main__':
     app.run(debug=True)
+
