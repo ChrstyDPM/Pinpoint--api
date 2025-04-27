@@ -5,8 +5,8 @@ app = Flask(__name__)  # <<< FIXED here
 
 api_key = 'AIzaSyBzCuON3M4Jg_wKY-EIlTxexqjjILLt76I'
 
-@app.route('/factchecktest', methods=['GET'])
-def factcheck():
+@app.route('/factcheck', methods=['GET'])
+def factchecktest():
     query = request.args.get('query')
     if not query:
         return jsonify({'error': 'No query provided'}), 400
