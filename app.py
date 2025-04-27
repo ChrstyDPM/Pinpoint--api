@@ -5,7 +5,7 @@ app = Flask(__name__)  # <<< FIXED here
 
 api_key = 'AIzaSyBzCuON3M4Jg_wKY-EIlTxexqjjILLt76I'
 
-@app.route('/factcheck', methods=['GET'])
+@app.route('/factchecktest', methods=['GET'])
 def factcheck():
     query = request.args.get('query')
     if not query:
