@@ -10,6 +10,7 @@ api_key = 'AIzaSyBzCuON3M4Jg_wKY-EIlTxexqjjILLt76I'
 def home():
     return "PinPoint API is running!"
 
+
     url = f"https://factchecktools.googleapis.com/v1alpha1/claims:search?query={query}&key={api_key}"
     response = requests.get(url)
 
