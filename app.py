@@ -6,11 +6,9 @@ app = Flask(__name__)
 
 api_key = 'AIzaSyBzCuON3M4Jg_wKY-EIlTxexqjjILLt76I'
 
-@app.route('/factcheck', methods=['GET'])
-def factcheck():
-    query = request.args.get('query')
-    if not query:
-        return jsonify({'error': 'No query provided'}), 400
+@app.route('/')
+def home():
+    return "PinPoint API is running!"
 
     url = f"https://factchecktools.googleapis.com/v1alpha1/claims:search?query={query}&key={api_key}"
     response = requests.get(url)
