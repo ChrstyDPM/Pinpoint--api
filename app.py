@@ -23,14 +23,17 @@ def factcheck():
         return jsonify({'error': 'Failed to fetch from Fact Check API'}), 500
 
     data = response.json()
-
     results = []
+
     for claim in data.get("claims", []):
+        claim_review = claim.get("claimReview", [{}])[0]
+
         results.append({
             "claim": claim.get("text"),
-            "rating": claim.get("claimReview", [{}])[0].get("textualRating"),
-            "publisher": claim.get("claimReview", [{}])[0].get("publisher", {}).get("name"),
-            "url": claim.get("claimReview", [{}])[0].get("url")
+            "rating": claim_review.get("textualRating"),
+            "publisher": claim_review.get("publisher", {}).get("name"),
+            "url": claim_review.get("url"),
+            "reviewDate": claim_review.get("reviewDate")
         })
 
     return jsonify(results)
