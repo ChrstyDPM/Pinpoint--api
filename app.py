@@ -33,7 +33,7 @@ def factcheck():
             "rating": claim_review.get("textualRating"),
             "publisher": claim_review.get("publisher", {}).get("name"),
             "url": claim_review.get("url"),
-            "reviewDate": claim_review.get("reviewDate")
+            "reviewDate": claim_review.get("reviewDate", "N/A")
         })
 
     return jsonify(results)
