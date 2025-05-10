@@ -14,18 +14,19 @@ def home():
 def factcheck():
     query = request.args.get('query')
     if not query:
-        return jsonify({'error': 'No query provided'}), 400
+        return jsonify({'results': [], 'total': 0, 'error': 'No query provided'}), 400
 
     url = f"https://factchecktools.googleapis.com/v1alpha1/claims:search?query={query}&key={api_key}"
-    response = requests.get(url)
-
-    if response.status_code != 200:
-        return jsonify({'error': 'Failed to fetch from Fact Check API'}), 500
+    
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        return jsonify({'results': [], 'total': 0, 'error': f'Failed to fetch from Fact Check API: {str(e)}'}), 500
 
     data = response.json()
     results_full = []
 
-    # ⬇️ This loop must be indented inside the function
     for claim in data.get("claims", []):
         claim_review = claim.get("claimReview", [{}])[0]
         results_full.append({
@@ -36,18 +37,14 @@ def factcheck():
             "reviewDate": claim_review.get("reviewDate")
         })
 
-    # Filter out claims without a reviewDate
     results_full = [r for r in results_full if r.get("reviewDate")]
-
-    # Now sort safely
     results_full.sort(key=lambda x: x["reviewDate"], reverse=True)
-
-    # Return top 5
     results = results_full[:5]
 
     return jsonify({
         "total": len(results_full),
-        "results": results
+        "results": results,
+        "error": None
     })
 
 if __name__ == '__main__':
