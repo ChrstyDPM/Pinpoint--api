@@ -36,6 +36,7 @@ def factcheck():
             "reviewDate": claim_review.get("reviewDate", "N/A")
         })
     results.sort(key=lambda x: x.get("reviewDate", ""), reverse=True)
+    results = results[:5]
     return jsonify(results)
 
 if __name__ == '__main__':
