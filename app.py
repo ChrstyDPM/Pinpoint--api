@@ -23,27 +23,33 @@ def factcheck():
         return jsonify({'error': 'Failed to fetch from Fact Check API'}), 500
 
     data = response.json()
-    results = []
+    results_full = []
 
+    # ⬇️ This loop must be indented inside the function
     for claim in data.get("claims", []):
         claim_review = claim.get("claimReview", [{}])[0]
-
-        results.append({
+        results_full.append({
             "claim": claim.get("text"),
             "rating": claim_review.get("textualRating"),
             "publisher": claim_review.get("publisher", {}).get("name"),
             "url": claim_review.get("url"),
-            "reviewDate": claim_review.get("reviewDate", "N/A")
+            "reviewDate": claim_review.get("reviewDate")
         })
-    results_full.sort(key=lambda x: x.get("reviewDate") or "", reverse=True)
 
-    results = results[:5]
-    
+    # Filter out claims without a reviewDate
+    results_full = [r for r in results_full if r.get("reviewDate")]
+
+    # Now sort safely
+    results_full.sort(key=lambda x: x["reviewDate"], reverse=True)
+
+    # Return top 5
+    results = results_full[:5]
+
     return jsonify({
-    "total": len(results_full),
-    "results": results
+        "total": len(results_full),
+        "results": results
     })
-    
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
