@@ -37,8 +37,12 @@ def factcheck():
         })
     results.sort(key=lambda x: x.get("reviewDate", ""), reverse=True)
     results = results[:5]
-    return jsonify(results)
-
+    
+    return jsonify({
+    "total": len(results_full),
+    "results": results
+    })
+    
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
