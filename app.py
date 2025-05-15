@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 # ✅ Load API keys from environment variables
 google_api_key = os.getenv("GOOGLE_FACTCHECK_API_KEY")
-openai_api_key = os.getenv("OPENAI_KEY")
+openai_api_key = os.getenv("OPENAI_API_KEY")
 
 @app.route('/')
 def home():
