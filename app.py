@@ -1,11 +1,25 @@
-api_key = os.getenv("AIzaSyBzCuON3M4Jg_wKY-EIlTxexqjjILLt76I")
+from flask import Flask, request, jsonify
+import requests
+import os
+
+app = Flask(__name__)
+
+# ✅ Load API keys from environment variables
+google_api_key = os.getenv("AIzaSyBzCuON3M4Jg_wKY-EIlTxexqjjILLt76I")
+openai_api_key = os.getenv("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")
+
+@app.route('/')
+def home():
+    return "PinPoint API is running!"
+
 @app.route('/factcheck', methods=['GET'])
 def factcheck():
     query = request.args.get('query')
     if not query:
         return jsonify({'results': [], 'total': 0, 'error': 'No query provided'}), 400
 
-    url = f"https://factchecktools.googleapis.com/v1alpha1/claims:search?query={query}&key={api_key}"
+    # ✅ Build Fact Check API URL
+    url = f"https://factchecktools.googleapis.com/v1alpha1/claims:search?query={query}&key={google_api_key}"
     
     try:
         response = requests.get(url)
@@ -28,12 +42,12 @@ def factcheck():
 
     results_full = [r for r in results_full if r.get("reviewDate")]
     results_full.sort(key=lambda x: x["reviewDate"], reverse=True)
-    results = results_full[:1]  # Only use the most recent one for summarization
+    results = results_full[:1]  # Most recent result only
 
     if not results:
         return jsonify({'results': [], 'total': 0, 'error': 'No valid results found'}), 404
 
-    # Format for OpenAI
+
     fact_string = f"""Summarize this fact-check as a social media post:
 
 Claim: {results[0]['claim']}
@@ -42,8 +56,7 @@ Publisher: {results[0]['publisher']}
 URL: {results[0]['url']}
 """
 
-    # Call OpenAI
-    openai_api_key = os.getenv("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")
+
     try:
         openai_response = requests.post(
             "https://api.openai.com/v1/chat/completions",
@@ -68,3 +81,7 @@ URL: {results[0]['url']}
         "summary": summary,
         "error": None
     })
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
