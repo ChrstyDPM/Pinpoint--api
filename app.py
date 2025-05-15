@@ -61,7 +61,7 @@ URL: {results[0]['url']}
         openai_response = requests.post(
             "https://api.openai.com/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer {openai_key}",
+                "Authorization": f"Bearer {openai_api_key}",
                 "Content-Type": "application/json"
             },
             json={
