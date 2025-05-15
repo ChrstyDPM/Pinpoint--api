@@ -1,5 +1,4 @@
-
- api_key = os.getenv("AIzaSyBzCuON3M4Jg_wKY-EIlTxexqjjILLt76I")
+api_key = os.getenv("AIzaSyBzCuON3M4Jg_wKY-EIlTxexqjjILLt76I")
 @app.route('/factcheck', methods=['GET'])
 def factcheck():
     query = request.args.get('query')
