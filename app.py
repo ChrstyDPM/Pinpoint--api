@@ -1,12 +1,12 @@
 
-api_key = 
+ api_key = os.getenv("AIzaSyBzCuON3M4Jg_wKY-EIlTxexqjjILLt76I")
 @app.route('/factcheck', methods=['GET'])
 def factcheck():
     query = request.args.get('query')
     if not query:
         return jsonify({'results': [], 'total': 0, 'error': 'No query provided'}), 400
 
-    url = f"https://factchecktools.googleapis.com/v1alpha1/claims:search?query={query}&key={'AIzaSyBzCuON3M4Jg_wKY-EIlTxexqjjILLt76I'}"
+    url = f"https://factchecktools.googleapis.com/v1alpha1/claims:search?query={query}&key={api_key}"
     
     try:
         response = requests.get(url)
