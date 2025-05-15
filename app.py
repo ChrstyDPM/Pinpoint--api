@@ -5,8 +5,8 @@ import os
 app = Flask(__name__)
 
 # ✅ Load API keys from environment variables
-google_api_key = os.getenv("AIzaSyBzCuON3M4Jg_wKY-EIlTxexqjjILLt76I")
-openai_api_key = os.getenv("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")
+google_api_key = os.getenv("GOOGLE_FACTCHECK_API_KEY")
+openai_api_key = os.getenv("OPENAI_KEY")
 
 @app.route('/')
 def home():
@@ -61,7 +61,7 @@ URL: {results[0]['url']}
         openai_response = requests.post(
             "https://api.openai.com/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer {openai_api_key}",
+                "Authorization": f"Bearer {openai_key}",
                 "Content-Type": "application/json"
             },
             json={
