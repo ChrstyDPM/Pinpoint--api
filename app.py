@@ -31,14 +31,19 @@ def factcheck():
     results_full = []
 
     for claim in data.get("claims", []):
-        claim_review = claim.get("claimReview", [{}])[0]
-        results_full.append({
-            "claim": claim.get("text"),
-            "rating": claim_review.get("textualRating"),
-            "publisher": claim_review.get("publisher", {}).get("name"),
-            "url": claim_review.get("url"),
-            "reviewDate": claim_review.get("reviewDate")
-        })
+        claim_review = claim.get("claimReview", [{}])
+    if claim_review and isinstance(claim_review, list):
+        review = claim_review[0]
+    else:
+        review = {}
+
+    results_full.append({
+    "claim": claim.get("text", "Unknown claim"),
+    "rating": review.get("textualRating", "Unrated"),
+    "publisher": review.get("publisher", {}).get("name", "Unknown publisher"),
+    "url": review.get("url", "N/A"),
+    "reviewDate": review.get("reviewDate", "Unknown date")
+    })
 
     results_full = [r for r in results_full if r.get("reviewDate")]
     results_full.sort(key=lambda x: x["reviewDate"], reverse=True)
