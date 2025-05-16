@@ -62,7 +62,7 @@ URL: {results[0]['url']}
 """
 
 
-    try:
+        try:
         openai_response = requests.post(
             "https://api.openai.com/v1/chat/completions",
             headers={
@@ -75,11 +75,16 @@ URL: {results[0]['url']}
                 "temperature": 0.7
             }
         )
+        openai_response.raise_for_status()  # Raise error if OpenAI call fails
         openai_data = openai_response.json()
         summary = openai_data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+        
+        # Fallback if summary is blank
+        if not summary:
+            summary = "No summary could be generated for this fact-check."
+    
     except Exception as e:
-        return jsonify({'results': results, 'total': len(results_full), 'error': f'OpenAI error: {str(e)}'})
-
+        summary = f"OpenAI error: {str(e)}"
     return jsonify({
         "total": len(results_full),
         "results": results,
