@@ -41,7 +41,7 @@ def factcheck():
 
     results_full = [r for r in results_full if r.get("reviewDate")]
     results_full.sort(key=lambda x: x["reviewDate"], reverse=True)
-    results = results_full[:1]  # Only the most recent result
+    results = results_full[:5]  # Only the most recent result
 
     if not results:
         return jsonify({'results': [], 'total': 0, 'summary': "", 'error': 'No valid results found'}), 404
