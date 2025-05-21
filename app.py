@@ -43,19 +43,28 @@ def factcheck():
     results_full.sort(key=lambda x: x["reviewDate"], reverse=True)
     results = results_full[:5]  # Only the most recent result
 
-    if not results:
-        return jsonify({'results': [], 'total': 0, 'summary': "", 'error': 'No valid results found'}), 404
+    summary = ""
+    source = "Google Fact Check"
+    openai_prompt = ""
 
-    # ✅ Compose summary prompt for OpenAI
-    fact_string = f"""Summarize this fact-check as a social media post:
+    if results:
+        openai_prompt = f"""Summarize this fact-check as a social media post:
 
 Claim: {results[0]['claim']}
 Rating: {results[0]['rating']}
 Publisher: {results[0]['publisher']}
 URL: {results[0]['url']}
 """
+    else:
+        # 🔁 Fallback: use the original user query
+        source = "OpenAI (No fact-check results)"
+        openai_prompt = f"""The following claim was entered by a user but no verified fact-checks were found.
 
-    summary = ""
+Please generate a thoughtful and responsible summary based on your general knowledge, as a social media post:
+
+Claim: {query}
+"""
+
     try:
         openai_response = requests.post(
             "https://api.openai.com/v1/chat/completions",
@@ -65,7 +74,7 @@ URL: {results[0]['url']}
             },
             json={
                 "model": "gpt-4",
-                "messages": [{"role": "user", "content": fact_string}],
+                "messages": [{"role": "user", "content": openai_prompt}],
                 "temperature": 0.7
             }
         )
@@ -73,7 +82,7 @@ URL: {results[0]['url']}
         openai_data = openai_response.json()
         summary = openai_data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
         if not summary:
-            summary = "No summary could be generated for this fact-check."
+            summary = "No summary could be generated."
 
     except Exception as e:
         summary = f"OpenAI error: {str(e)}"
@@ -82,6 +91,7 @@ URL: {results[0]['url']}
         "total": len(results_full),
         "results": results,
         "summary": summary,
+        "source": source,
         "error": None
     })
 
