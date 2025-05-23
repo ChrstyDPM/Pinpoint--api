@@ -16,7 +16,8 @@ def home():
 def factcheck():
     post = request.args.get('query')
     if not post:
-        return jsonify({'results': [], 'total': 0, 'summary': "", 'claim": "", 'error': 'No post provided'}), 400
+        return jsonify({'results': [], 'total': 0, 'summary': "", 'claim': "", 'error': 'No post provided'}), 400
+
 
     # 🔍 Step 1 – Extract claim(s) from the post using OpenAI
     claim_extraction_prompt = f"""Extract a concise, fact-checkable claim from the following social media post:
