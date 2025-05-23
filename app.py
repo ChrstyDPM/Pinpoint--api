@@ -20,10 +20,10 @@ def factcheck():
 
     # 🔍 Step 1 – Extract claim(s) from the post using OpenAI
     claim_extraction_prompt = f"""Extract a concise, fact-checkable claim from the following social media post:
-    
-    "{post}"
-    
-    Respond with only the claim."""
+
+"{post}"
+
+Respond with only the claim."""
     
     try:
         claim_response = requests.post(
@@ -107,8 +107,13 @@ Write a responsible and informative social media response about this claim using
         openai_response.raise_for_status()
         openai_data = openai_response.json()
         summary = openai_data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+        if not summary:
+            summary = "No summary could be generated."
     except Exception as e:
         summary = f"OpenAI error: {str(e)}"
+
+    # 📌 Add PinPoint brand emoji
+    summary += " 📌🧠 #PinPoint"
 
     return jsonify({
         "total": len(results_full),
