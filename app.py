@@ -14,56 +14,82 @@ def home():
 
 @app.route('/factcheck', methods=['GET'])
 def factcheck():
-    query = request.args.get('query')
-    if not query:
-        return jsonify({'results': [], 'total': 0, 'summary': "", 'error': 'No query provided'}), 400
+    post = request.args.get('query')
+    if not post:
+        return jsonify({'results': [], 'total': 0, 'summary': "", 'error': 'No post provided'}), 400
 
-    # ✅ Build Fact Check API URL
-    url = f"https://factchecktools.googleapis.com/v1alpha1/claims:search?query={query}&key={google_api_key}"
+    # 🔍 Step 1 – Extract claim(s) from the post using OpenAI
+    claim_extraction_prompt = f"""Extract a concise, fact-checkable claim from the following social media post:
+    
+    "{post}"
+    
+    Respond with only the claim."""
     
     try:
-        response = requests.get(url)
+        claim_response = requests.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {openai_api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "gpt-4",
+                "messages": [{"role": "user", "content": claim_extraction_prompt}],
+                "temperature": 0.5
+            }
+        )
+        claim_response.raise_for_status()
+        claim_data = claim_response.json()
+        claim = claim_data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+    except Exception as e:
+        return jsonify({'results': [], 'total': 0, 'summary': "", 'error': f'Error extracting claim: {str(e)}'}), 500
+
+    if not claim:
+        return jsonify({'results': [], 'total': 0, 'summary': "", 'error': 'No claim could be extracted.'}), 400
+
+    # 🔗 Step 2 – Query Google Fact Check API
+    factcheck_url = f"https://factchecktools.googleapis.com/v1alpha1/claims:search?query={claim}&key={google_api_key}"
+
+    try:
+        response = requests.get(factcheck_url)
         response.raise_for_status()
         data = response.json()
     except requests.exceptions.RequestException as e:
         return jsonify({'results': [], 'total': 0, 'summary': "", 'error': f'Failed to fetch from Fact Check API: {str(e)}'}), 500
 
     results_full = []
-    for claim in data.get("claims", []):
-        claim_review = claim.get("claimReview", [{}])[0]
+    for item in data.get("claims", []):
+        review = item.get("claimReview", [{}])[0]
         results_full.append({
-            "claim": claim.get("text"),
-            "rating": claim_review.get("textualRating"),
-            "publisher": claim_review.get("publisher", {}).get("name"),
-            "url": claim_review.get("url"),
-            "reviewDate": claim_review.get("reviewDate")
+            "claim": item.get("text"),
+            "rating": review.get("textualRating"),
+            "publisher": review.get("publisher", {}).get("name"),
+            "url": review.get("url"),
+            "reviewDate": review.get("reviewDate")
         })
 
     results_full = [r for r in results_full if r.get("reviewDate")]
     results_full.sort(key=lambda x: x["reviewDate"], reverse=True)
-    results = results_full[:5]  # Only the most recent result
+    results = results_full[:5]
 
-    summary = ""
+    # 🧠 Step 3 – Summarize for social media
     source = "Google Fact Check"
-    openai_prompt = ""
-
     if results:
-        openai_prompt = f"""Summarize this fact-check as a social media post:
+        top_result = results[0]
+        prompt = f"""Write a social media post that summarizes this fact check:
 
-Claim: {results[0]['claim']}
-Rating: {results[0]['rating']}
-Publisher: {results[0]['publisher']}
-URL: {results[0]['url']}
+Claim: {top_result['claim']}
+Rating: {top_result['rating']}
+Source: {top_result['publisher']}
+URL: {top_result['url']}
 """
     else:
-        # 🔁 Fallback: use the original user query
         source = "OpenAI (No fact-check results)"
-        openai_prompt = f"""The following claim was entered by a user but no verified fact-checks were found.
+        prompt = f"""No fact-checks were found for the following claim:
 
-Please generate a thoughtful and responsible summary based on your general knowledge, as a social media post:
+"{claim}"
 
-Claim: {query}
-"""
+Write a responsible and informative social media response about this claim using your general knowledge."""
 
     try:
         openai_response = requests.post(
@@ -74,16 +100,13 @@ Claim: {query}
             },
             json={
                 "model": "gpt-4",
-                "messages": [{"role": "user", "content": openai_prompt}],
+                "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.7
             }
         )
         openai_response.raise_for_status()
         openai_data = openai_response.json()
         summary = openai_data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
-        if not summary:
-            summary = "No summary could be generated."
-
     except Exception as e:
         summary = f"OpenAI error: {str(e)}"
 
