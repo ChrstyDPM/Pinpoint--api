@@ -16,7 +16,7 @@ def home():
 def factcheck():
     post = request.args.get('query')
     if not post:
-        return jsonify({'results': [], 'total': 0, 'summary': "", 'error': 'No post provided'}), 400
+        return jsonify({'results': [], 'total': 0, 'summary': "", 'claim": "", 'error': 'No post provided'}), 400
 
     # 🔍 Step 1 – Extract claim(s) from the post using OpenAI
     claim_extraction_prompt = f"""Extract a concise, fact-checkable claim from the following social media post:
@@ -24,7 +24,7 @@ def factcheck():
 "{post}"
 
 Respond with only the claim."""
-    
+
     try:
         claim_response = requests.post(
             "https://api.openai.com/v1/chat/completions",
@@ -42,10 +42,13 @@ Respond with only the claim."""
         claim_data = claim_response.json()
         claim = claim_data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
     except Exception as e:
-        return jsonify({'results': [], 'total': 0, 'summary': "", 'error': f'Error extracting claim: {str(e)}'}), 500
+        return jsonify({'results': [], 'total': 0, 'summary': "", 'claim': "", 'error': f'Error extracting claim: {str(e)}'}), 500
 
     if not claim:
-        return jsonify({'results': [], 'total': 0, 'summary': "", 'error': 'No claim could be extracted.'}), 400
+        return jsonify({'results': [], 'total': 0, 'summary': "", 'claim': "", 'error': 'No claim could be extracted.'}), 400
+
+    # 📋 Log the extracted claim
+    print(f"[PinPoint DEBUG] Extracted Claim: {claim}")
 
     # 🔗 Step 2 – Query Google Fact Check API
     factcheck_url = f"https://factchecktools.googleapis.com/v1alpha1/claims:search?query={claim}&key={google_api_key}"
@@ -55,7 +58,7 @@ Respond with only the claim."""
         response.raise_for_status()
         data = response.json()
     except requests.exceptions.RequestException as e:
-        return jsonify({'results': [], 'total': 0, 'summary': "", 'error': f'Failed to fetch from Fact Check API: {str(e)}'}), 500
+        return jsonify({'results': [], 'total': 0, 'summary': "", 'claim': claim, 'error': f'Failed to fetch from Fact Check API: {str(e)}'}), 500
 
     results_full = []
     for item in data.get("claims", []):
@@ -112,13 +115,14 @@ Write a responsible and informative social media response about this claim using
     except Exception as e:
         summary = f"OpenAI error: {str(e)}"
 
-    # 📌 Add PinPoint brand emoji
+    # 📌 Add PinPoint branding
     summary += " 📌🧠 #PinPoint"
 
     return jsonify({
         "total": len(results_full),
         "results": results,
         "summary": summary,
+        "claim": claim,
         "source": source,
         "error": None
     })
