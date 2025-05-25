@@ -17,7 +17,7 @@ limiter = Limiter(get_remote_address, app=app, default_limits=["5 per minute"])
 # 🔐 Load API keys from environment
 google_api_key = os.getenv("GOOGLE_FACTCHECK_API_KEY")
 openai_api_key = os.getenv("OPENAI_API_KEY")
-pinpoint_api_key = os.getenv("PINPOINT_API_KEY")  # New: Protect your API
+pinpoint_api_key = os.getenv("pinpoint_api_key")  # New: Protect your API
 
 # 📝 Logging
 logging.basicConfig(level=logging.INFO)
