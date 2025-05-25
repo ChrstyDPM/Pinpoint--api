@@ -1,3 +1,5 @@
-Flask
+flask
+flask-limiter
+flask-cors
 requests
 gunicorn
