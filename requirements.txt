@@ -3,3 +3,4 @@ flask-limiter
 flask-cors
 requests
 gunicorn
+redis>=3.0
