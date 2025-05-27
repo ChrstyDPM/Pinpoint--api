@@ -1,3 +1,4 @@
+
 from flask import Flask, request, jsonify
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -7,19 +8,13 @@ import os
 import logging
 
 app = Flask(__name__)
-
-# 🌐 Secure CORS – adjust to your frontend domain
 CORS(app, origins=["https://thepinpoint.info"])
-
-# 🛑 Rate limiting – 5 requests/minute per IP
 limiter = Limiter(get_remote_address, app=app, default_limits=["5 per minute"])
 
-# 🔐 Load API keys from environment
 google_api_key = os.getenv("GOOGLE_FACTCHECK_API_KEY")
 openai_api_key = os.getenv("OPENAI_API_KEY")
-pinpoint_api_key = os.getenv("pinpoint_api_key")  # New: Protect your API
+pinpoint_api_key = os.getenv("pinpoint_api_key")
 
-# 📝 Logging
 logging.basicConfig(level=logging.INFO)
 
 @app.route('/')
@@ -29,7 +24,6 @@ def home():
 @app.route('/factcheck', methods=['GET'])
 @limiter.limit("5 per minute")
 def factcheck():
-    # 🔐 Simple API token authentication
     auth_token = request.headers.get("X-API-Key")
     if auth_token != pinpoint_api_key:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -38,12 +32,7 @@ def factcheck():
     if not post:
         return jsonify({'results': [], 'total': 0, 'summary': "", 'claim': "", 'error': 'No post provided'}), 400
 
-    # 🔍 Step 1 – Extract claim from post using OpenAI
-    claim_extraction_prompt = f"""Extract a concise, fact-checkable claim from the following social media post:
-
-"{post}"
-
-Respond with only the claim."""
+    claim_extraction_prompt = f'Extract a concise, fact-checkable claim from the following social media post:\n\n"{post}"\n\nRespond with only the claim.'
 
     try:
         claim_response = requests.post(
@@ -57,7 +46,7 @@ Respond with only the claim."""
                 "messages": [{"role": "user", "content": claim_extraction_prompt}],
                 "temperature": 0.5
             },
-            timeout=10  # ✅ Timeout added
+            timeout=10
         )
         claim_response.raise_for_status()
         claim_data = claim_response.json()
@@ -71,10 +60,9 @@ Respond with only the claim."""
 
     logging.info(f"[PinPoint] Extracted Claim: {claim}")
 
-    # 🔗 Step 2 – Google Fact Check API
     factcheck_url = f"https://factchecktools.googleapis.com/v1alpha1/claims:search?query={claim}&key={google_api_key}"
     try:
-        response = requests.get(factcheck_url, timeout=5)  # ✅ Timeout added
+        response = requests.get(factcheck_url, timeout=5)
         response.raise_for_status()
         data = response.json()
     except requests.exceptions.RequestException as e:
@@ -96,24 +84,13 @@ Respond with only the claim."""
     results_full.sort(key=lambda x: x["reviewDate"], reverse=True)
     results = results_full[:5]
 
-    # 🧠 Step 3 – Summarize result
     source = "Google Fact Check"
     if results:
         top_result = results[0]
-        prompt = f"""Write a social media post that summarizes this fact check:
-
-Claim: {top_result['claim']}
-Rating: {top_result['rating']}
-Source: {top_result['publisher']}
-URL: {top_result['url']}
-"""
+        prompt = f'Write a social media post that summarizes this fact check:\n\nClaim: {top_result["claim"]}\nRating: {top_result["rating"]}\nSource: {top_result["publisher"]}\nURL: {top_result["url"]}'
     else:
         source = "OpenAI (No fact-check results)"
-        prompt = f"""No fact-checks were found for the following claim:
-
-"{claim}"
-
-Write a responsible and informative social media response about this claim using your general knowledge."""
+        prompt = f'No official fact-checks were found for this claim:\n\n"{claim}"\n\nWrite a short, responsible social media post that explains what the public should consider about this claim. Use general knowledge and avoid speculation.'
 
     try:
         openai_response = requests.post(
@@ -127,18 +104,21 @@ Write a responsible and informative social media response about this claim using
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.7
             },
-            timeout=10  # ✅ Timeout added
+            timeout=10
         )
         openai_response.raise_for_status()
         openai_data = openai_response.json()
-        summary = openai_data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
-        if not summary:
-            summary = "No summary could be generated."
+        try:
+            summary = openai_data["choices"][0]["message"]["content"].strip()
+            if not summary:
+                raise ValueError("Empty summary")
+        except (KeyError, IndexError, ValueError) as e:
+            logging.error(f"OpenAI summary fallback failed: {e}")
+            summary = "This topic could not be summarized at this time."
     except Exception as e:
         logging.error(f"OpenAI error: {e}")
         summary = "OpenAI error: Unable to generate summary."
 
-    # 📌 Add PinPoint branding
     summary += " 📌🧠 #PinPoint"
 
     return jsonify({
