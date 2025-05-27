@@ -6,22 +6,24 @@ import requests
 import os
 import logging
 
+# 🔧 App setup
 app = Flask(__name__)
 CORS(app, origins=["https://thepinpoint.info"])
 
-# Use environment variable for Redis (set this in Render or .env)
+# 🧠 Use hosted Redis (Upstash) from env variable
 redis_uri = os.getenv("REDIS_URL", "redis://localhost:6379")
-
 limiter = Limiter(
     get_remote_address,
     app=app,
     storage_uri=redis_uri
 )
 
+# 🔐 API keys from environment
 google_api_key = os.getenv("GOOGLE_FACTCHECK_API_KEY")
 openai_api_key = os.getenv("OPENAI_API_KEY")
 pinpoint_api_key = os.getenv("pinpoint_api_key")
 
+# 📝 Logging
 logging.basicConfig(level=logging.INFO)
 
 @app.route('/')
@@ -39,6 +41,7 @@ def factcheck():
     if not post:
         return jsonify({'results': [], 'total': 0, 'summary': "", 'claim': "", 'error': 'No post provided'}), 400
 
+    # 🧠 Claim Extraction
     claim_extraction_prompt = f'Extract a concise, fact-checkable claim from the following social media post:\n\n"{post}"\n\nRespond with only the claim.'
 
     try:
@@ -67,6 +70,7 @@ def factcheck():
 
     logging.info(f"[PinPoint] Extracted Claim: {claim}")
 
+    # 🔎 Fact Check Lookup
     factcheck_url = f"https://factchecktools.googleapis.com/v1alpha1/claims:search?query={claim}&key={google_api_key}"
     try:
         response = requests.get(factcheck_url, timeout=5)
@@ -91,6 +95,7 @@ def factcheck():
     results_full.sort(key=lambda x: x["reviewDate"], reverse=True)
     results = results_full[:5]
 
+    # 🧾 Summary Generation
     source = "Google Fact Check"
     if results:
         top_result = results[0]
