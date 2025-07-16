@@ -30,9 +30,11 @@ pinpoint_openai_instructions_no_factcheck = os.getenv("PINPOINT_OPENAI_INSTRUCTI
 # 📝 Logging
 logging.basicConfig(level=logging.INFO)
 
+
 @app.route('/')
 def home():
     return "PinPoint API is running securely!"
+
 
 @app.route('/factcheck', methods=['GET'])
 @limiter.limit("5 per minute")
@@ -50,7 +52,7 @@ def factcheck():
         f'Extract a concise, fact-checkable claim or hypothesis from the following social media post:\n\n"{post}"\n\n'
         'Respond with only the claim or hypothesis.'
     )
-
+    claim = ""
     try:
         claim_response = requests.post(
             "https://api.openai.com/v1/chat/completions",
@@ -95,13 +97,4 @@ def factcheck():
             "rating": review.get("textualRating"),
             "publisher": review.get("publisher", {}).get("name"),
             "url": review.get("url"),
-            "reviewDate": review.get("reviewDate")
-        })
-
-    results_full = [r for r in results_full if r.get("reviewDate")]
-    results_full.sort(key=lambda x: x["reviewDate"], reverse=True)
-    results = results_full[:5]
-
-    # 🧾 Summary Generation
-    if results:
-        source = "Google Fact Check"
+            "reviewDate": review.get("revi
