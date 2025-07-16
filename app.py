@@ -42,7 +42,7 @@ def factcheck():
         return jsonify({'results': [], 'total': 0, 'summary': "", 'claim': "", 'error': 'No post provided'}), 400
 
     # 🧠 Claim Extraction
-    claim_extraction_prompt = f'Extract a concise, fact-checkable claim from the following social media post:\n\n"{post}"\n\nRespond with only the claim.'
+    claim_extraction_prompt = f'Extract a concise, fact-checkable claim or hypothesis from the following social media post:\n\n"{post}"\n\nRespond with only the claim or hypothesis.'
 
     try:
         claim_response = requests.post(
@@ -99,10 +99,10 @@ def factcheck():
     source = "Google Fact Check"
     if results:
         top_result = results[0]
-        prompt = f'Write a social media post that summarizes this fact check:\n\nClaim: {top_result["claim"]}\nRating: {top_result["rating"]}\nSource: {top_result["publisher"]}\nURL: {top_result["url"]}'
+        prompt = f'Write a social media post that not only summarizes this fact check claim or hypothesis but sounds like a non-AI person wrote it. Feel free to use humor and human tones and it does not have to be grammatically correct:\n\nClaim: {top_result["claim"]}\nRating: {top_result["rating"]}\nSource: {top_result["publisher"]}\nURL: {top_result["url"]}'
     else:
         source = "OpenAI (No fact-check results)"
-        prompt = f'No official fact-checks were found for this claim:\n\n"{claim}"\n\nWrite a short, responsible social media post that explains what the public should consider about this claim. Use general knowledge and avoid speculation.'
+        prompt = f'No official fact-checks were found for this claim:\n\n"{claim}"\n\nWrite a short, responsible social media post that explains what the public should consider about this claim. Use general knowledge and avoid speculation. Use a non-AI person tone so someone does not speculate that AI wrote it. Use humor.  Grammer does not have to be followed'
 
     try:
         openai_response = requests.post(
