@@ -10,7 +10,7 @@ import logging
 app = Flask(__name__)
 CORS(app, origins=["https://thepinpoint.info"])
 
-# 🧠 Use hosted Redis (Upstash) from env variable
+# 🧠 Redis for Rate Limiting
 redis_uri = os.getenv("REDIS_URL", "redis://localhost:6379")
 limiter = Limiter(
     get_remote_address,
@@ -18,12 +18,10 @@ limiter = Limiter(
     storage_uri=redis_uri
 )
 
-# 🔐 API keys from environment
+# 🔐 Environment Variables
 google_api_key = os.getenv("GOOGLE_FACTCHECK_API_KEY")
 openai_api_key = os.getenv("OPENAI_API_KEY")
 pinpoint_api_key = os.getenv("pinpoint_api_key")
-
-# 📋 Instruction environment variables
 pinpoint_openai_instructions_with_factcheck = os.getenv("PINPOINT_OPENAI_INSTRUCTIONS_WITH_FACTCHECK", "")
 pinpoint_openai_instructions_no_factcheck = os.getenv("PINPOINT_OPENAI_INSTRUCTIONS_NO_FACTCHECK", "")
 
@@ -41,4 +39,4 @@ def home():
 def factcheck():
     auth_token = request.headers.get("X-API-Key")
     if auth_token != pinpoint_api_key:
-        return jsonify({'error':
+        ret
