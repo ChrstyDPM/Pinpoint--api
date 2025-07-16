@@ -23,6 +23,10 @@ google_api_key = os.getenv("GOOGLE_FACTCHECK_API_KEY")
 openai_api_key = os.getenv("OPENAI_API_KEY")
 pinpoint_api_key = os.getenv("pinpoint_api_key")
 
+# 📋 Instruction environment variables
+pinpoint_openai_instructions_with_factcheck = os.getenv("PINPOINT_OPENAI_INSTRUCTIONS_WITH_FACTCHECK", "")
+pinpoint_openai_instructions_no_factcheck = os.getenv("PINPOINT_OPENAI_INSTRUCTIONS_NO_FACTCHECK", "")
+
 # 📝 Logging
 logging.basicConfig(level=logging.INFO)
 
@@ -42,7 +46,10 @@ def factcheck():
         return jsonify({'results': [], 'total': 0, 'summary': "", 'claim': "", 'error': 'No post provided'}), 400
 
     # 🧠 Claim Extraction
-    claim_extraction_prompt = f'Extract a concise, fact-checkable claim or hypothesis from the following social media post:\n\n"{post}"\n\nRespond with only the claim or hypothesis.'
+    claim_extraction_prompt = (
+        f'Extract a concise, fact-checkable claim or hypothesis from the following social media post:\n\n"{post}"\n\n'
+        'Respond with only the claim or hypothesis.'
+    )
 
     try:
         claim_response = requests.post(
@@ -96,52 +103,5 @@ def factcheck():
     results = results_full[:5]
 
     # 🧾 Summary Generation
-    source = "Google Fact Check"
     if results:
-        top_result = results[0]
-        prompt = f'Write a social media post that not only summarizes this fact check claim or hypothesis but sounds like a non-AI person wrote it. Feel free to use humor and human tones and it does not have to be grammatically correct:\n\nClaim: {top_result["claim"]}\nRating: {top_result["rating"]}\nSource: {top_result["publisher"]}\nURL: {top_result["url"]}'
-    else:
-        source = "OpenAI (No fact-check results)"
-        prompt = f'No official fact-checks were found for this claim:\n\n"{claim}"\n\nWrite a short, responsible social media post that explains what the public should consider about this claim. Use general knowledge and avoid speculation. Use a non-AI person tone so someone does not speculate that AI wrote it. Use humor.  Grammer does not have to be followed'
-
-    try:
-        openai_response = requests.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {openai_api_key}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "gpt-4",
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.7
-            },
-            timeout=10
-        )
-        openai_response.raise_for_status()
-        openai_data = openai_response.json()
-        try:
-            summary = openai_data["choices"][0]["message"]["content"].strip()
-            if not summary:
-                raise ValueError("Empty summary")
-        except (KeyError, IndexError, ValueError) as e:
-            logging.error(f"OpenAI summary fallback failed: {e}")
-            summary = "This topic could not be summarized at this time."
-    except Exception as e:
-        logging.error(f"OpenAI error: {e}")
-        summary = "OpenAI error: Unable to generate summary."
-
-    summary += " 📌🧠 #PinPoint"
-
-    return jsonify({
-        "total": len(results_full),
-        "results": results,
-        "summary": summary,
-        "claim": claim,
-        "source": source,
-        "error": None
-    })
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+        source = "Google Fact Check"
