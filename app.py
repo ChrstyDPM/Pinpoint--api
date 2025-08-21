@@ -1,6 +1,4 @@
 from flask import Flask, request, jsonify
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from flask_cors import CORS
 import requests
 import os
@@ -9,14 +7,6 @@ import logging
 # 🔧 App setup
 app = Flask(__name__)
 CORS(app, origins=["https://thepinpoint.info"])
-
-# 🧠 Redis for Rate Limiting
-redis_uri = os.getenv("REDIS_URL", "redis://localhost:6379")
-limiter = Limiter(
-    get_remote_address,
-    app=app,
-    storage_uri=redis_uri
-)
 
 # 🔐 Environment Variables
 google_api_key = os.getenv("GOOGLE_FACTCHECK_API_KEY")
@@ -35,7 +25,6 @@ def home():
 
 
 @app.route('/factcheck', methods=['GET'])
-@limiter.limit("5 per minute")
 def factcheck():
     auth_token = request.headers.get("X-API-Key")
     if auth_token != pinpoint_api_key:
